@@ -18,6 +18,43 @@ jobs:
         with:
           channel: 'stable'
 
+      - name: Fix iOS 14.0 Deployment Target
+        run: |
+          # Fix for workmanager_apple plugin requiring iOS 14.0+
+          echo "Fixing iOS deployment target for workmanager_apple compatibility..."
+          
+          # Update Podfile to iOS 14.0
+          if [ -f "ios/Podfile" ]; then
+            # Backup original
+            cp ios/Podfile ios/Podfile.backup
+            
+            # Update or add platform line
+            if grep -q "platform :ios" ios/Podfile; then
+              sed -i '' "s/platform :ios, '[0-9]*\.[0-9]*'/platform :ios, '14.0'/g" ios/Podfile
+            else
+              sed -i '' "1i\\
+          platform :ios, '14.0'
+          " ios/Podfile
+            fi
+            echo "✅ Podfile updated"
+          fi
+          
+          # Update Xcode project
+          if [ -f "ios/Runner.xcodeproj/project.pbxproj" ]; then
+            sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9]*\.[0-9]*;/IPHONEOS_DEPLOYMENT_TARGET = 14.0;/g' ios/Runner.xcodeproj/project.pbxproj
+            echo "✅ Xcode project updated"
+          fi
+          
+          # Clean pods cache
+          rm -rf ios/Pods ios/Podfile.lock 2>/dev/null || true
+
+      - name: Install CocoaPods
+        run: |
+          sudo gem install cocoapods
+          cd ios
+          pod install --repo-update
+          cd ..
+
       - name: Get dependencies
         run: flutter pub get
 
