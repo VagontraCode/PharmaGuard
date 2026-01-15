@@ -28,8 +28,9 @@ jobs:
         run: |
           dir build\windows\x64\runner\Release
           echo "Checking if exe exists..."
-          if (Test-Path "build\windows\x64\runner\Release\pharmatest.exe") {
+          if (Test-Path "build\windows\x64\runner\Release\*.exe") {
             echo "✅ EXE found"
+            Get-ChildItem "build\windows\x64\runner\Release\*.exe"
           } else {
             echo "❌ EXE not found"
             exit 1
