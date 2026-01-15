@@ -117,7 +117,9 @@ msix_config:
   display_name: PharmaGarde
   publisher_display_name: Georges
   identity_name: com.example.pharmagarde
+  publisher: CN=Georges
   msix_version: 1.0.0.0
   logo_path: assets/icon.png
   capabilities:
     - internetClient
+  store: false
