@@ -13,6 +13,9 @@ jobs:
   build_android:
     name: Build Android
     runs-on: ubuntu-latest
+    continue-on-error: true
+    outputs:
+      status: ${{ job.status }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -32,6 +35,9 @@ jobs:
   build_ios:
     name: Build iOS
     runs-on: macos-latest
+    continue-on-error: true
+    outputs:
+      status: ${{ job.status }}
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -62,6 +68,9 @@ jobs:
   build_linux:
     name: Build Linux
     runs-on: ubuntu-latest
+    continue-on-error: true
+    outputs:
+      status: ${{ job.status }}
     steps:
       - uses: actions/checkout@v4
       - name: Install Dependencies
@@ -85,6 +94,9 @@ jobs:
   build_windows:
     name: Build Windows
     runs-on: windows-latest
+    continue-on-error: true
+    outputs:
+      status: ${{ job.status }}
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -93,7 +105,7 @@ jobs:
       - run: flutter pub get
       - run: flutter build windows --release
       - name: Create MSIX
-        run: dart run msix:create
+        run: dart run msix:create --install-certificate false
       - uses: actions/upload-artifact@v4
         with:
           name: windows-msix
@@ -102,18 +114,63 @@ jobs:
   create_release:
     name: Create GitHub Release
     needs: [build_android, build_ios, build_linux, build_windows]
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
+        continue-on-error: true
+      
+      - name: List available artifacts
+        run: |
+          echo "📦 Artifacts disponibles :"
+          ls -R artifacts/ || echo "Aucun artifact trouvé"
+      
+      - name: Generate build status
+        id: status
+        run: |
+          echo "## 📊 Statut des builds" > build_status.md
+          echo "" >> build_status.md
+          
+          # Android
+          if [ "${{ needs.build_android.outputs.status }}" == "success" ]; then
+            echo "✅ **Android** : Build réussi" >> build_status.md
+          else
+            echo "❌ **Android** : Build échoué" >> build_status.md
+          fi
+          
+          # iOS
+          if [ "${{ needs.build_ios.outputs.status }}" == "success" ]; then
+            echo "✅ **iOS** : Build réussi" >> build_status.md
+          else
+            echo "❌ **iOS** : Build échoué" >> build_status.md
+          fi
+          
+          # Linux
+          if [ "${{ needs.build_linux.outputs.status }}" == "success" ]; then
+            echo "✅ **Linux** : Build réussi" >> build_status.md
+          else
+            echo "❌ **Linux** : Build échoué" >> build_status.md
+          fi
+          
+          # Windows
+          if [ "${{ needs.build_windows.outputs.status }}" == "success" ]; then
+            echo "✅ **Windows** : Build réussi" >> build_status.md
+          else
+            echo "❌ **Windows** : Build échoué" >> build_status.md
+          fi
+          
+          cat build_status.md
       
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
+          body_path: build_status.md
+          fail_on_unmatched_files: false
           files: |
-            artifacts/android-apk/app-release.apk
-            artifacts/ios-ipa/PharmaGarde.ipa
-            artifacts/linux-zip/PharmaGarde-Linux.zip
+            artifacts/android-apk/*.apk
+            artifacts/ios-ipa/*.ipa
+            artifacts/linux-zip/*.zip
             artifacts/windows-msix/*.msix

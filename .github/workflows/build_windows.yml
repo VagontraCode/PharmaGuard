@@ -24,8 +24,19 @@ jobs:
       - name: Build Windows Release
         run: flutter build windows --release
 
+      - name: Verify build output
+        run: |
+          dir build\windows\x64\runner\Release
+          echo "Checking if exe exists..."
+          if (Test-Path "build\windows\x64\runner\Release\pharmatest.exe") {
+            echo "✅ EXE found"
+          } else {
+            echo "❌ EXE not found"
+            exit 1
+          }
+
       - name: Create MSIX Installer
-        run: dart run msix:create
+        run: dart run msix:create --install-certificate false
 
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
