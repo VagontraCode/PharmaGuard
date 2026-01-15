@@ -38,6 +38,15 @@ jobs:
         with:
           channel: 'stable'
       - run: flutter pub get
+      - name: Enable iOS platform
+        run: |
+          flutter config --enable-ios
+          flutter create . --platforms=ios
+      - name: Install CocoaPods
+        run: sudo gem install cocoapods
+      - name: Install iOS Pods
+        working-directory: ios
+        run: pod install --repo-update
       - run: flutter build ios --release --no-codesign
       - name: Package IPA
         run: |
@@ -82,6 +91,8 @@ jobs:
         with:
           channel: 'stable'
       - run: flutter pub get
+      - name: Install MSIX package
+        run: dart pub global activate msix
       - run: dart run msix:create
       - uses: actions/upload-artifact@v4
         with:

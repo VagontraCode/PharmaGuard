@@ -21,19 +21,22 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Install MSIX package
+        run: dart pub global activate msix
+
       - name: Fix msix configuration
         run: |
           # Create a clean msix config for CI
           @"
-display_name: "PharmaGuard"
-identity_name: "com.vagontracode.pharmaguard"
-msix_version: "1.0.0.0"
-publisher_display_name: "CN=PharmaGuard"
-logo_path: "assets/icons/icon.png"
-capabilities:
-  - "internetClient"
-store: false
-"@ | Out-File -FilePath msix_config.yaml -Encoding UTF8
+          display_name: PharmaGuard
+          identity_name: com.vagontracode.pharmaguard
+          msix_version: 1.0.0.0
+          publisher_display_name: CN=PharmaGuard
+          logo_path: assets/icons/icon.png
+          capabilities:
+            - internetClient
+          store: false
+          "@ | Out-File -FilePath msix_config.yaml -Encoding UTF8
           
           # Show the config
           Get-Content msix_config.yaml
@@ -45,4 +48,4 @@ store: false
         uses: actions/upload-artifact@v4
         with:
           name: windows-msix
-          path: build/windows/**/*.msix
+          path: build/windows/x64/runner/Release/*.msix
