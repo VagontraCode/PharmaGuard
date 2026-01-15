@@ -1,0 +1,55 @@
+name: Bump Version & Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      part:
+        description: 'Version part to bump'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - build
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install Cider
+        run: dart pub global activate cider
+
+      - name: Bump Version
+        id: version
+        run: |
+          export PATH="$PATH":"$HOME/.pub-cache/bin"
+          
+          # Bump the version in pubspec.yaml
+          cider bump ${{ inputs.part }}
+          
+          # Output the new version for the next step
+          echo "VERSION=$(cider version)" >> $GITHUB_OUTPUT
+
+      - name: Commit & Tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git add pubspec.yaml
+          git commit -m "Bump version to ${{ steps.version.outputs.VERSION }}"
+          git tag v${{ steps.version.outputs.VERSION }}
+          
+          git push origin HEAD
+          git push origin v${{ steps.version.outputs.VERSION }}
