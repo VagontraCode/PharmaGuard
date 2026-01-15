@@ -120,6 +120,5 @@ msix_config:
   publisher: CN=Georges
   msix_version: 1.0.0.0
   logo_path: assets/icon.png
-  capabilities:
-    - internetClient
+  capabilities: internetClient
   store: false
