@@ -119,11 +119,7 @@ msix_config:
   identity_name: com.example.pharmagarde
   publisher: CN=Georges, O=PharmaGarde, C=CM
   msix_version: 1.0.0.0
-  # Commente logo_path si tu n'as pas l'icône
-  # logo_path: assets/icon.png
+  logo_path: assets/icon.png
   capabilities: internetClient
   store: false
   install_certificate: false
-  # Options additionnelles pour éviter les erreurs
-  certificate_path: NONE
-  certificate_password: NONE
