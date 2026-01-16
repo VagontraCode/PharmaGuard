@@ -42,9 +42,9 @@ void _scheduleNextFetch() {
   final now = DateTime.now();
   // Targets: Today 9am, Today 6pm, Tomorrow 9am
   final targets = [
-    DateTime(now.year, now.month, now.day, 9, 0), // 9:00 AM
+    DateTime(now.year, now.month, now.day, 7, 0), // 7:00 AM
     DateTime(now.year, now.month, now.day, 18, 0), // 6:00 PM
-    DateTime(now.year, now.month, now.day + 1, 9, 0), // Tomorrow 9:00 AM
+    DateTime(now.year, now.month, now.day + 1, 7, 0), // Tomorrow 7:00 AM
   ];
 
   // Find the first target that is in the future
@@ -57,6 +57,8 @@ void _scheduleNextFetch() {
     initialDelay: delay,
     existingWorkPolicy: ExistingWorkPolicy.replace,
     constraints: Constraints(networkType: NetworkType.connected),
+    backoffPolicy: BackoffPolicy.linear,
+    backoffPolicyDelay: const Duration(minutes: 15),
   );
   debugPrint(
     "Next background fetch scheduled in ${delay.inHours} hours and ${delay.inMinutes % 60} minutes",

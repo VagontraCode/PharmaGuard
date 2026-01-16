@@ -204,8 +204,8 @@ class PharmacyRepository {
   }
 
   bool _isCacheExpired(DateTime lastFetchTime) {
-    // Increased to 18 hours. If fetched at 2 PM, it remains valid until 8 AM next day.
-    return DateTime.now().difference(lastFetchTime) > const Duration(hours: 18);
+    // Reduced to 12 hours. If fetched at 6 PM, it expires at 6 AM next day.
+    return DateTime.now().difference(lastFetchTime) > const Duration(hours: 12);
   }
 
   /// Forces a fetch from the network and updates the persistent cache.

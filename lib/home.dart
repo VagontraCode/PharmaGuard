@@ -4,6 +4,7 @@ import 'package:pharmatest/pharmacy_repository.dart';
 import 'package:pharmatest/theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pharmatest/update_service.dart';
 
 class HomePage extends StatefulWidget {
   final SharedPreferences prefs;
@@ -84,6 +85,37 @@ class _HomePageState extends State<HomePage> {
                     onPressed: widget.toggleTheme,
                     tooltip: _getThemeTooltip(currentMode),
                   );
+                },
+              ),
+              PopupMenuButton<String>(
+                icon: Icon(
+                  Icons.more_vert,
+                  color: Theme.of(context).iconTheme.color,
+                ),
+                onSelected: (value) {
+                  if (value == 'update') {
+                    UpdateService().checkForUpdates(
+                      context,
+                      showNoUpdate: true,
+                    );
+                  }
+                },
+                itemBuilder: (BuildContext context) {
+                  return [
+                    PopupMenuItem<String>(
+                      value: 'update',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.system_update,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                          SizedBox(width: 12),
+                          Text('Vérifier les mises à jour'),
+                        ],
+                      ),
+                    ),
+                  ];
                 },
               ),
             ],
