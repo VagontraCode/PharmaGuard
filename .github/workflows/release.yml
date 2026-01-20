@@ -27,10 +27,12 @@ jobs:
           channel: 'stable'
       - run: flutter pub get
       - run: flutter build apk --release
+      - name: Rename APK
+        run: mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/PharmaGarde-${{ github.ref_name }}-Android.apk
       - uses: actions/upload-artifact@v4
         with:
           name: android-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: build/app/outputs/flutter-apk/PharmaGarde-*-Android.apk
 
   build_ios:
     name: Build iOS
@@ -48,6 +50,29 @@ jobs:
         run: |
           flutter config --enable-ios
           flutter create . --platforms=ios
+      - name: Fix iOS 14.0 Deployment Target
+        run: |
+          echo "Fixing iOS deployment target for workmanager_apple compatibility..."
+          
+          # Update Podfile to iOS 14.0
+          if [ -f "ios/Podfile" ]; then
+            cp ios/Podfile ios/Podfile.backup
+            
+            if grep -q "platform :ios" ios/Podfile; then
+              sed -i '' "s/platform :ios, '[0-9]*\.[0-9]*'/platform :ios, '14.0'/g" ios/Podfile
+            else
+              sed -i '' "1i\\
+          platform :ios, '14.0'
+          " ios/Podfile
+            fi
+            echo "✅ Podfile updated"
+          fi
+          
+          # Update Xcode project
+          if [ -f "ios/Runner.xcodeproj/project.pbxproj" ]; then
+            sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9]*\.[0-9]*;/IPHONEOS_DEPLOYMENT_TARGET = 14.0;/g' ios/Runner.xcodeproj/project.pbxproj
+            echo "✅ Xcode project updated"
+          fi
       - name: Install CocoaPods
         run: sudo gem install cocoapods
       - name: Install iOS Pods
@@ -59,11 +84,11 @@ jobs:
           cd build/ios/iphoneos
           mkdir Payload
           cp -r Runner.app Payload
-          zip -r PharmaGarde.ipa Payload
+          zip -r PharmaGarde-${{ github.ref_name }}-iOS.ipa Payload
       - uses: actions/upload-artifact@v4
         with:
           name: ios-ipa
-          path: build/ios/iphoneos/PharmaGarde.ipa
+          path: build/ios/iphoneos/PharmaGarde-*-iOS.ipa
 
   build_linux:
     name: Build Linux
@@ -85,11 +110,11 @@ jobs:
       - name: Package Linux
         run: |
           cd build/linux/x64/release/bundle
-          zip -r ../../../../../PharmaGarde-Linux.zip .
+          zip -r ../../../../../PharmaGarde-${{ github.ref_name }}-Linux.zip .
       - uses: actions/upload-artifact@v4
         with:
           name: linux-zip
-          path: PharmaGarde-Linux.zip
+          path: PharmaGarde-*-Linux.zip
 
   build_windows:
     name: Build Windows
@@ -106,10 +131,14 @@ jobs:
       - run: flutter build windows --release
       - name: Create MSIX
         run: dart run msix:create --install-certificate false
+      - name: Rename MSIX
+        run: |
+          cd build/windows/x64/runner/Release
+          Get-ChildItem *.msix | Rename-Item -NewName "PharmaGarde-${{ github.ref_name }}-Windows.msix"
       - uses: actions/upload-artifact@v4
         with:
           name: windows-msix
-          path: build/windows/x64/runner/Release/*.msix
+          path: build/windows/x64/runner/Release/PharmaGarde-*-Windows.msix
 
   create_release:
     name: Create GitHub Release
@@ -170,7 +199,7 @@ jobs:
           body_path: build_status.md
           fail_on_unmatched_files: false
           files: |
-            artifacts/android-apk/*.apk
-            artifacts/ios-ipa/*.ipa
-            artifacts/linux-zip/*.zip
-            artifacts/windows-msix/*.msix
+            artifacts/android-apk/PharmaGarde-*-Android.apk
+            artifacts/ios-ipa/PharmaGarde-*-iOS.ipa
+            artifacts/linux-zip/PharmaGarde-*-Linux.zip
+            artifacts/windows-msix/PharmaGarde-*-Windows.msix
