@@ -205,7 +205,28 @@ class _CitiesPageState extends State<CitiesPage> {
     );
   }
 
-  SliverList _buildCitiesSliverList(List<String> cities) {
+  Widget _buildCitiesSliverList(List<String> cities) {
+    final width = MediaQuery.of(context).size.width;
+    final isDesktop = width > 700;
+
+    if (isDesktop) {
+      return SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        sliver: SliverGrid(
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 400,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 16,
+            mainAxisExtent: 100, // Fixed height for consistency in grid
+          ),
+          delegate: SliverChildBuilderDelegate((context, index) {
+            final cityName = cities[index];
+            return _buildCityItem(cityName, index, isGrid: true);
+          }, childCount: cities.length),
+        ),
+      );
+    }
+
     return SliverList(
       delegate: SliverChildBuilderDelegate((context, index) {
         final cityName = cities[index];
@@ -214,10 +235,12 @@ class _CitiesPageState extends State<CitiesPage> {
     );
   }
 
-  Widget _buildCityItem(String cityName, int index) {
+  Widget _buildCityItem(String cityName, int index, {bool isGrid = false}) {
     return AnimatedContainer(
-      duration: Duration(milliseconds: 200),
-      margin: EdgeInsets.fromLTRB(16, 0, 16, 12),
+      duration: const Duration(milliseconds: 200),
+      // If in grid, let the grid handle spacing (margins are 0 or minimal internal)
+      // If in list, keep original margins
+      margin: isGrid ? EdgeInsets.zero : const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -241,7 +264,7 @@ class _CitiesPageState extends State<CitiesPage> {
             );
           },
           child: Container(
-            padding: EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
             decoration: AppTheme.modernCard(context),
             child: Row(
               children: [
@@ -264,9 +287,10 @@ class _CitiesPageState extends State<CitiesPage> {
                     size: 20,
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
@@ -276,8 +300,10 @@ class _CitiesPageState extends State<CitiesPage> {
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
                         widget.region,
                         style: GoogleFonts.inter(
@@ -285,6 +311,8 @@ class _CitiesPageState extends State<CitiesPage> {
                           fontWeight: FontWeight.w500,
                           fontSize: 12,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),

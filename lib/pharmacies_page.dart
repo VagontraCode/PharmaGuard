@@ -272,7 +272,28 @@ class _PharmaciesPageState extends State<PharmaciesPage> {
     );
   }
 
-  SliverList _buildPharmaciesSliverList(List<Pharmacy> pharmacies) {
+  Widget _buildPharmaciesSliverList(List<Pharmacy> pharmacies) {
+    final width = MediaQuery.of(context).size.width;
+    final isDesktop = width > 700;
+
+    if (isDesktop) {
+      return SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        sliver: SliverGrid(
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 500,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 16,
+            mainAxisExtent: 350, // Fixed height for consistency
+          ),
+          delegate: SliverChildBuilderDelegate((context, index) {
+            final pharmacy = pharmacies[index];
+            return PharmacyCard(pharmacy: pharmacy, index: index, isGrid: true);
+          }, childCount: pharmacies.length),
+        ),
+      );
+    }
+
     return SliverList(
       delegate: SliverChildBuilderDelegate((context, index) {
         final pharmacy = pharmacies[index];
@@ -414,8 +435,14 @@ class _PharmaciesPageState extends State<PharmaciesPage> {
 class PharmacyCard extends StatelessWidget {
   final Pharmacy pharmacy;
   final int index;
+  final bool isGrid;
 
-  const PharmacyCard({super.key, required this.pharmacy, required this.index});
+  const PharmacyCard({
+    super.key,
+    required this.pharmacy,
+    required this.index,
+    this.isGrid = false,
+  });
 
   Future<void> _launchPhoneCall(
     BuildContext context,
@@ -523,7 +550,9 @@ class PharmacyCard extends StatelessWidget {
     return AnimatedContainer(
       duration: Duration(milliseconds: 300 + (index * 100)),
       curve: Curves.easeOut,
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      margin: isGrid 
+          ? EdgeInsets.zero 
+          : const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: Material(
         color: Colors.transparent,
         child: Container(
@@ -544,6 +573,7 @@ class PharmacyCard extends StatelessWidget {
                   Icons.access_time,
                   pharmacy.scheduleDescription,
                 ),
+                const Spacer(),
                 const SizedBox(height: 16),
                 _buildActionButtons(context),
               ],
