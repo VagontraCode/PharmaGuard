@@ -110,6 +110,41 @@ class _PharmaciesPageState extends State<PharmaciesPage> {
       elevation: 0,
       pinned: true,
       expandedHeight: 120.0,
+      actions: [
+        IconButton(
+          icon: Icon(
+            _pharmacyRepository.isFavoriteCity(widget.region, widget.city)
+                ? Icons.star
+                : Icons.star_border,
+            color: Theme.of(context).primaryColor,
+          ),
+          tooltip: 'Ajouter aux favoris',
+          onPressed: () async {
+            await _pharmacyRepository.toggleFavoriteCity(
+              widget.region,
+              widget.city,
+            );
+            setState(() {}); // Rebuild to update icon
+
+            if (mounted) {
+              final isFav = _pharmacyRepository.isFavoriteCity(
+                widget.region,
+                widget.city,
+              );
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    isFav
+                        ? '${widget.city} ajoutée aux favoris (Mise à jour auto activée)'
+                        : '${widget.city} retirée des favoris',
+                  ),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            }
+          },
+        ),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         title: Text(
           'Pharmacies',

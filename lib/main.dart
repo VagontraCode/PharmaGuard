@@ -19,12 +19,25 @@ void callbackDispatcher() {
         // 1. Refresh Regions (Base data)
         await repository.getRegionsAndTowns();
 
-        // 2. Refresh specific city if saved
-        final lastRegion = prefs.getString('last_region');
-        final lastCity = prefs.getString('last_city');
+        // 2. Refresh Favorites or Fallback
+        final favorites = repository.getFavoriteCities();
 
-        if (lastRegion != null && lastCity != null) {
-          await repository.updatePharmaciesInBackground(lastRegion, lastCity);
+        if (favorites.isNotEmpty) {
+          // Update all favorite cities
+          for (final cityKey in favorites) {
+            final parts = cityKey.split('|');
+            if (parts.length == 2) {
+              await repository.updatePharmaciesInBackground(parts[0], parts[1]);
+            }
+          }
+        } else {
+          // Fallback: Refresh specific city if saved (Last Viewed)
+          final lastRegion = prefs.getString('last_region');
+          final lastCity = prefs.getString('last_city');
+
+          if (lastRegion != null && lastCity != null) {
+            await repository.updatePharmaciesInBackground(lastRegion, lastCity);
+          }
         }
       } catch (e) {
         debugPrint("Background fetch error: $e");
@@ -38,9 +51,9 @@ void callbackDispatcher() {
   });
 }
 
-void _scheduleNextFetch() {
+void _scheduleNextFetch({ExistingWorkPolicy policy = ExistingWorkPolicy.replace}) {
   final now = DateTime.now();
-  // Targets: Today 9am, Today 6pm, Tomorrow 9am
+  // Targets: Today 7am, Today 6pm, Tomorrow 7am
   final targets = [
     DateTime(now.year, now.month, now.day, 7, 0), // 7:00 AM
     DateTime(now.year, now.month, now.day, 18, 0), // 6:00 PM
@@ -55,13 +68,13 @@ void _scheduleNextFetch() {
     "unique_fetch_task",
     fetchTaskName,
     initialDelay: delay,
-    existingWorkPolicy: ExistingWorkPolicy.replace,
+    existingWorkPolicy: policy,
     constraints: Constraints(networkType: NetworkType.connected),
     backoffPolicy: BackoffPolicy.linear,
     backoffPolicyDelay: const Duration(minutes: 15),
   );
   debugPrint(
-    "Next background fetch scheduled in ${delay.inHours} hours and ${delay.inMinutes % 60} minutes",
+    "Next background fetch scheduled in ${delay.inHours} hours and ${delay.inMinutes % 60} minutes with policy ${policy.name}",
   );
 }
 
@@ -72,7 +85,8 @@ void main() async {
   Workmanager().initialize(callbackDispatcher);
 
   // Schedule the first task based on current time
-  _scheduleNextFetch();
+  // Use .keep to avoid resetting the timer every time the app opens
+  _scheduleNextFetch(policy: ExistingWorkPolicy.keep);
 
   final prefs = await SharedPreferences.getInstance();
 

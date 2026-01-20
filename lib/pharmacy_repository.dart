@@ -228,4 +228,28 @@ class PharmacyRepository {
       // We don't rethrow here to avoid crashing the background worker repeatedly
     }
   }
+
+  // --- Favorite Cities Management ---
+
+  List<String> getFavoriteCities() {
+    return prefs.getStringList('favorite_cities') ?? [];
+  }
+
+  Future<void> toggleFavoriteCity(String region, String town) async {
+    final favorites = getFavoriteCities();
+    final key = "$region|$town";
+
+    if (favorites.contains(key)) {
+      favorites.remove(key);
+    } else {
+      favorites.add(key);
+    }
+
+    await prefs.setStringList('favorite_cities', favorites);
+  }
+
+  bool isFavoriteCity(String region, String town) {
+    final favorites = getFavoriteCities();
+    return favorites.contains("$region|$town");
+  }
 }
